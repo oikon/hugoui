@@ -1,6 +1,7 @@
-#lang racket
+#lang racket/base
 
-(require racket/runtime-path)
+(require (for-syntax racket/base)
+         racket/runtime-path)
 
 (provide (struct-out hugo-process)
          hugo-run
