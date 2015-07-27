@@ -1,12 +1,9 @@
-#lang racket
+#lang racket/base
 
-(require "hugo/hugo.rkt"
-         racket/gui
-         syntax/parse
+(require framework
          net/sendurl
-         framework
-         (for-syntax racket/syntax
-                     syntax/parse))
+         racket/gui
+         "hugo/hugo.rkt")
 
 (application:current-app-name "Hugo GUI")
 
