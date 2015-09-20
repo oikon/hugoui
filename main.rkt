@@ -88,6 +88,28 @@
 (define (enable x) (send x enable #t))
 (define (disable x) (send x enable #f))
 
+
+;; parameters
+(define hugo-server-url #f)
+
+(define parameters-thread (make-parameter #f))
+
+(define (watch-stdout)
+  (when (hugo)
+    (parameters-thread
+     (thread
+      (lambda ()
+        (for ([line (in-lines (hugo-process-stdout (hugo)))])
+          (match line
+            [(regexp #rx"Web Server is available at (.*)" (list _ url))
+             (set! hugo-server-url url)]
+            [else #f])))))))
+
+(define (stop-watching)
+  (when (parameters-thread)
+    (kill-thread (parameters-thread))
+    (set! hugo-server-url #f)))
+
 (define (hugo-server-start/stop btn evt)
 
   (define (start-hook)
@@ -105,7 +127,8 @@
 
     ;; stop
     [(is-running? (hugo))
-     (hugo-kill (hugo))
+     (stop-watching)
+     (hugo-kill (hugo) #f)
      (send btn set-label "Start")
      (stop-hook)]
 
@@ -123,7 +146,8 @@
                   #:callback
                   (lambda (hp)
                     (send btn set-label "Start")
-                    (stop-hook)))))]))
+                    (stop-hook))))
+       (watch-stdout))]))
 
 (define bottom-panel
   (new horizontal-panel%
@@ -178,7 +202,9 @@
        [parent bottom-panel]
        [enabled #f]
        [callback (lambda (b e)
-                   (send-url "http://127.0.0.1:1313/"))]))
+                   (send-url
+                    (or hugo-server-url
+                        "http://127.0.0.1:1313/")))]))
 
 (define (ensure-hugo-blog dir)
   (cond
